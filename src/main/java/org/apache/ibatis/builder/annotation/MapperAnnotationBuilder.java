@@ -1,5 +1,5 @@
 /**
- *    Copyright 2009-2017 the original author or authors.
+ *    Copyright 2009-2020 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -123,6 +123,7 @@ public class MapperAnnotationBuilder {
     if (!configuration.isResourceLoaded(resource)) {
       loadXmlResource();
       configuration.addLoadedResource(resource);
+      //每个mapper文件自动生成一个namespace，通常自动匹配就是这么来的，约定俗成代替人工设置最简化常见的开发
       assistant.setCurrentNamespace(type.getName());
       parseCache();
       parseCacheRef();

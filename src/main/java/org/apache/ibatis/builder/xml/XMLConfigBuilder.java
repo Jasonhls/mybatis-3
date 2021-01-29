@@ -67,6 +67,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public XMLConfigBuilder(Reader reader, String environment, Properties props) {
+    //创建一个XPathParser对象，构造函数参数分别是Reader，是否进行DTD校验，属性配置，XML实体节点解析器
     this(new XPathParser(reader, true, props, new XMLMapperEntityResolver()), environment, props);
   }
 
@@ -96,6 +97,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    //mybatis配置文件的主流程
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
@@ -103,6 +105,8 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void parseConfiguration(XNode root) {
     try {
       //issue #117 read properties first
+      //所有的root.evalNode底层都是调用XML DOM的evaluate()方法。根据给定的节点表达式来计算指定的XPath表达式，
+      // 并且返回一个XPathResult对象，返回类型在Node.evalNode()方法中均被指定为NODE。
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);

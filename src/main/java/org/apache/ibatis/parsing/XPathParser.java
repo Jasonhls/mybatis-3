@@ -1,5 +1,5 @@
 /**
- *    Copyright 2009-2017 the original author or authors.
+ *    Copyright 2009-2020 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -112,6 +112,7 @@ public class XPathParser {
 
   public XPathParser(String xml, boolean validation, Properties variables, EntityResolver entityResolver) {
     commonConstructor(validation, variables, entityResolver);
+    //根据解析xml文件生成Document
     this.document = createDocument(new InputSource(new StringReader(xml)));
   }
 
@@ -237,6 +238,7 @@ public class XPathParser {
       factory.setIgnoringElementContentWhitespace(false);
       /*设置是否将CDATA节点转换为Text节点*/
       factory.setCoalescing(false);
+      /*设置是否展开实体引用节点，这里应该是sql片段引用的关键*/
       factory.setExpandEntityReferences(true);
 
       DocumentBuilder builder = factory.newDocumentBuilder();
@@ -257,6 +259,7 @@ public class XPathParser {
         public void warning(SAXParseException exception) throws SAXException {
         }
       });
+      //解析xml文件，生成Document对象
       return builder.parse(inputSource);
     } catch (Exception e) {
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);
