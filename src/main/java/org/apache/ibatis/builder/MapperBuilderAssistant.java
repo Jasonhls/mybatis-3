@@ -358,6 +358,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return resultMaps;
   }
 
+  //其中除了javaType，column外，其他都是可选的，property也就是其中的name属性或property属性，主要用于根据@Param或jdk 8 -parameters形参名而非
+  //依赖声明顺序进行映射
   public ResultMapping buildResultMapping(
       Class<?> resultType,
       String property,

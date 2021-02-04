@@ -31,6 +31,7 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public class MetaClass {
 
+  //主要采用了工厂类，其内部使用的Reflector采用了facade设计模式
   private final ReflectorFactory reflectorFactory;
   private final Reflector reflector;
 

@@ -65,22 +65,31 @@ public class XMLStatementBuilder extends BaseBuilder {
     Integer timeout = context.getIntAttribute("timeout");
     String parameterMap = context.getStringAttribute("parameterMap");
     String parameterType = context.getStringAttribute("parameterType");
+    //解决别名，Configuration无参构造中会默认添加许多别名到集合中，然后这里就会判断parameterType是否在这个别名集合中
     Class<?> parameterTypeClass = resolveClass(parameterType);
     String resultMap = context.getStringAttribute("resultMap");
     String resultType = context.getStringAttribute("resultType");
     String lang = context.getStringAttribute("lang");
+    //Mybatis从3.2开始支持可插拔的脚本语言，因此你可以在插入一种语言的驱动（language driver）之后来写基于这种语言的动态SQL查询
     LanguageDriver langDriver = getLanguageDriver(lang);
 
     Class<?> resultTypeClass = resolveClass(resultType);
+    //结果集类型，FORWARD_ONLY,SCROLL_SENSITIVE或SCROLL_INSENSITIVE中的一个，默认值为unset（依赖驱动）
     String resultSetType = context.getStringAttribute("resultSetType");
+    //解析crud语句的类型，mybatis目前支持三种，prepare、硬编码、以及存储过程调用
     StatementType statementType = StatementType.valueOf(context.getStringAttribute("statementType", StatementType.PREPARED.toString()));
     ResultSetType resultSetTypeEnum = resolveResultSetType(resultSetType);
 
     String nodeName = context.getNode().getNodeName();
+    //解析SQL命令类型，目前主要有UNKNOWN，INSERT，UPDATE，SELECT，FLUSH
     SqlCommandType sqlCommandType = SqlCommandType.valueOf(nodeName.toUpperCase(Locale.ENGLISH));
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
+    //insert/delete/update后是否刷新缓存
     boolean flushCache = context.getBooleanAttribute("flushCache", !isSelect);
+    //select是否使用缓存
     boolean useCache = context.getBooleanAttribute("useCache", isSelect);
+    //这个设置仅针对嵌套结果 select 语句适用：如果为true，就是假设包含了嵌套结果集或是分组了，这样的话当返回一个主结果行的时候，
+    //就不会发生有对前面结果集的引用的情况。这就使得在获取嵌套的结果集的时候不至于导致内存不够用。默认值：false。
     boolean resultOrdered = context.getBooleanAttribute("resultOrdered", false);
 
     // Include Fragments before parsing

@@ -58,20 +58,30 @@ public class MapperRegistry {
   }
 
   public <T> void addMapper(Class<T> type) {
+    //对于mybatis mapper接口文件，必须是interface，不能是class
     if (type.isInterface()) {
+      //判重，确保只会加载一次不会被覆盖
       if (hasMapper(type)) {
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        //为mapper接口创建一个MapperProxyFactory代理
+        //knownMappers是MapperRegistry的主要字段，维护了Mapper接口和代理类的映射关系，key是mapper接口类，value是MapperProxyFactory
         knownMappers.put(type, new MapperProxyFactory<T>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
+        /**
+         *MapperProxyFactory主要是维护mapper接口的方法与对应mapper文件中的具体CRUD节点的关联关系。其中每个Method与对应MapperMethod维护在一起。
+         * MapperMethod是mapper中具体映射语句节点的内部表示。首先为mapper接口创建MapperProxyFactory，然后创建MapperAannotationBuilder进行具体的解析。
+         */
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
+        //mapper的解析
         parser.parse();
         loadCompleted = true;
       } finally {
+        //剔除解析出现异常的接口
         if (!loadCompleted) {
           knownMappers.remove(type);
         }
@@ -90,8 +100,12 @@ public class MapperRegistry {
    * @since 3.2.2
    */
   public void addMappers(String packageName, Class<?> superType) {
+    //mybatis框架提供的搜索classpath下指定的package以及子package中符合条件的(注解或继承与某个类或接口)的类，
+    // 默认使用Thread.currentThread().getContextClassLoader()返回的加载器，和spring的工具殊途同归。
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
+    //无条件的加载所有的类，因为调用方传递了Object.class作为父类，这也给以后的指定的mapper接口预留了余地。
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
+    //所有匹配的class都被存储在ResolveUtil.matches字段中
     Set<Class<? extends Class<?>>> mapperSet = resolverUtil.getClasses();
     for (Class<?> mapperClass : mapperSet) {
       addMapper(mapperClass);

@@ -177,7 +177,10 @@ public class Configuration {
   //mybatis插件列表
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
-  //类型注册器，用于在执行sql语句的出入参数映射以及mybatis-config文件里的各种配置比如<transactionManager type="JDBC"/><dataSource type="POOLED">时使用简写
+  /**
+   *类型注册器，用于在执行sql语句的出入参数映射以及mybatis-config文件里的各种配置比如<transactionManager type="JDBC"/><dataSource type="POOLED">时使用的简写
+   * 无参构造器中会注册各种数据类型的简称
+   */
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
@@ -878,6 +881,10 @@ public class Configuration {
     }
   }
 
+  /**
+   * 继承HashMap，对于HashMap的装饰在于增加了put时防重复的处理，get时取不到值时候的异常处理，这样核心应用层就不需要额外关心各种异常处理
+   * @param <V>
+   */
   protected static class StrictMap<V> extends HashMap<String, V> {
 
     private static final long serialVersionUID = -4950446264854982944L;

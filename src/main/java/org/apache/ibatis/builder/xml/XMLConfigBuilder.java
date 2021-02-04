@@ -84,6 +84,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private XMLConfigBuilder(XPathParser parser, String environment, Properties props) {
+    //Configuration的无参构造器中会注册很多alias
     super(new Configuration());
     ErrorContext.instance().resource("SQL Mapper Configuration");
     this.configuration.setVariables(props);
@@ -109,17 +110,92 @@ public class XMLConfigBuilder extends BaseBuilder {
       // 并且返回一个XPathResult对象，返回类型在Node.evalNode()方法中均被指定为NODE。
       propertiesElement(root.evalNode("properties"));
       Properties settings = settingsAsProperties(root.evalNode("settings"));
+      /**
+       *加载自定义VFS ，VFS主要用来加载容器内的各种资源，比如jar或class文件。mybatis提供了2个实现JBoss6VFS和DefaultVFS，并提供了
+       * 用户扩展点，用于自定义VFS实现，加载顺序是自定义VFS实现 > 默认VFS实现 取第一个加载成功的，默认情况下会先加载JBoss6VFS，
+       * 如果classpath下找不到jboss的vfs实现才会加载默认VFS实现，启动打印日志如下：
+       * org.apache.ibatis.io.VFS.getClass(VFS.java:111) Class not found: org.jboss.vfs.VFS
+       * org.apache.ibatis.io.JBoss6VFS.setInvalid(JBoss6VFS.java:142) JBoss 6 VFS API is not available in this environment.
+       * org.apache.ibatis.io.VFS.getClass(VFS.java:111) Class not found: org.jboss.vfs.VirtualFile
+       * org.apache.ibatis.io.VFS$VFSHolder.createVFS(VFS.java:63) VFS implementation org.apache.ibatis.io.JBoss6VFS is not valid in this environment.
+       * org.apache.ibatis.io.VFS$VFSHolder.createVFS(VFS.java:77) Using VFS adapter org.apache.ibatis.io.DefaultVFS
+       */
       loadCustomVfs(settings);
+      //解析类型别名typeAliasesElement
       typeAliasesElement(root.evalNode("typeAliases"));
+      /**
+       *加载插件，最常用的插件应该算是分页插件PageHelper了，再比如druid连接池提供的各种监控、拦截、预发检查功能，在使用其他连接池
+       * 比如dbcp的时候，在不修改连接池源码的情况下，那可以借助mybatis的插件体系实现。
+       * 插件具体实现的时候，采用的是拦截器模式，要注册为mybatis插件，比如是实现org.apache.ibatis.plugin.Interceptor接口，每个插件可以有
+       * 自己的属性。interceptor属性值既可以完整的类名，也可以是别名，只要别名在typealias中存在即可，如果启动时无法解析，会抛出ClassNotFound
+       * 异常。实例化插件后，将设置插件的属性赋值给插件实现类的属性字段。mybatis提供了两个内置的插件例子，AlwaysMapPlugin和ExamplePlugin
+       */
       pluginElement(root.evalNode("plugins"));
+      /**
+       *加载对象工厂，Mybatis每次创建对象的新实例时，它都会使用一个对象工厂（ObjectFactory）实例来完成。
+       * 默认的对象工厂DefaultObjectFactory做的仅仅是实例化目标类，要么通过默认构造方法，
+       * 要么在参数映射存在的时候通过参数构造方法来实例化。
+       */
+
       objectFactoryElement(root.evalNode("objectFactory"));
+      /**
+       *创建对象包装器工厂，要实现自定义的对象包装器工厂，只要实现ObjectWrapperFactory中的两个即可偶hasWrapperFor和getWrapperFor
+       */
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      //加载反射工厂，为了提供更好的灵活性，mybatis支持用户自定义反射工厂，不过总体来说，用的不多，要实现反射工厂，只要实现
+      //ReflectorFactory接口即可。默认的反射工厂是DefaultReflectorFactory。一般来说，使用默认的反射工厂就可以了。
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      //将各个值赋值给configuration，同时在这里有重新设置了默值，所有这一点很重要，configuration中的默认值不一定是真正的默认值
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      /**
+       * 加载环境配置，类似于spring和maven里面的profile，允许给开发、生产环境同时配置不同的environment，根据不同的环境加载不同的配置，
+       * 如果在SqlSessionFactoryBuilder调用期间没有传递使用哪个环境的话，默认会使用一个名为default的环境。找到对应的environment之后，就可以
+       * 加载事务管理器和数据源了。事务管理器和数据源类型这里都用到了类型别名，JDBC/POOLED都是mybatis内置提供的，在Configuration构造器
+       * 执行期间注册到TypeAliasRegister。
+       */
       environmentsElement(root.evalNode("environments"));
+      /**
+       * 加载数据库厂商标识，Mybatis可以根据不同的数据库厂商执行不同的语句，这种多厂商的支持是基于映射语句中的databaseId属性。
+       * Mybatis会加载不带databaseId属性和带有匹配当前数据库databaseId属性的所有语句。如果同时找到并带有databaseId和不带
+       * databaseId的相同语句，则后者会被舍弃。为支持多厂商特性只要像下面这样在mybatis-config.xml文件中加入databaseIdProvider即可。
+       * <databaseIdProvider type="DB_VENDOR">
+       *     <property name="SQL Server" valule="sqlserver/>
+       *     <property name="MySQL" value="mysql"/>
+       *     <property name="Oracle" value="oracle"/>
+       * </databaseIdProvider>
+       * 典型的实现比如VendorDatabaseIdProvider类
+       */
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+      /**
+       *加载类型处理器 ，无论是Mybatis在预处理语句中设置一个参数时，还是从结果集中取出一个值时，都会用类型处理器将获取的值以合适的方式转换成Java类型。
+       * mybatis提供了两种方式注册类型处理器，package自动检索方式喝显示定义方式。使用自动检索功能的时候，只能通过注解方式来指定JDBC类型。
+       * mybatis在初始化TypeHandlerRegistry期间，自动注册了大部分的常用的类型处理器比如字符串，数字，日期等。对于非标准的类型，用户可以自定义类型处理器来处理。
+       * 要实现一个自定义类型处理器，只要实现org.apache.ibatis.type.TypeHandler接口，或继承一个实用类org.apache.ibatis.type.BaseTypeHandler，并将它映射到一个JDBC类型即可。
+       * 具体例子见test.examples包中的例子
+       * 还需要再mybatis-config.xml添加如下配置：
+       *  <typeHandlers>
+       *      <typeHandler handler="org.mybatis.example.ExampleTypeHandler"/>
+       *  </typeHandlers>
+       */
       typeHandlerElement(root.evalNode("typeHandlers"));
+      /**
+       * 加载mapper文件，mybatis提供了两种配置mapper的方法，一种是使用package自动搜索的模式，这样指定package下所有接口都会被注册为mapper，比如
+       * <mappers>
+       *     <package name="org.mybatis.builder"/>
+       * </mappers>
+       * 另一种方式是明确指定mapper，这又可以通过resource、url或class进行细分。比如：
+       * <mappers>
+       *     <mapper resource="org/mybatis/builder/AuthorMapper.xml"/>
+       *     <mapper url="file:///var/mappers/AuthorMapper.xml"/>
+       *     <mapper class="org.mybatis.builder.AuthorMapper"/>
+       * </mappers>
+       * 如果要同时使用package自动扫描和通过mapper明确指定要加载的mapper，则必须先声明mapper，然后生命package，否则DTD校验会失败。
+       * 同时一定要确保package自动扫描的范围不包含明确指定的mapper，否则在通过package扫描的interface的时候，尝试加载对应xml文件的loadXmlResource()逻辑中
+       * 出现判重出错，报org.apache.ibatis.binding.BindingException异常。
+       * 对于通过package加载的mapper文件，调用mapperRegistry.addMappers(packageName)进行加载，其核心逻辑在org.apache.ibatis.binding.MapperRegistry中，
+       * 对于每个找到的接口或mapper文件中，最后调用XMLMapperBuilder进行具体解析。对于明确指定的mapper文件或mapper接口，则主要用XMLMapperBuilder进行具体解析。
+       */
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -132,6 +208,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
     Properties props = context.getChildrenAsProperties();
     // Check that all settings are known to the configuration class
+    //检查所有从settings加载的设置，确保它们都在Configuration定义的范围内
     MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
     for (Object key : props.keySet()) {
       if (!metaConfig.hasSetter(String.valueOf(key))) {
@@ -184,6 +261,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
+        //将interceptor指定的名称解析为Interceptor类型
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).newInstance();
         interceptorInstance.setProperties(properties);
         configuration.addInterceptor(interceptorInstance);
@@ -219,9 +297,11 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
+      //加载property节点为property
       Properties defaults = context.getChildrenAsProperties();
       String resource = context.getStringAttribute("resource");
       String url = context.getStringAttribute("url");
+      //必须至少包含resource或url属性之一
       if (resource != null && url != null) {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
       }
@@ -279,10 +359,14 @@ public class XMLConfigBuilder extends BaseBuilder {
       }
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
+        //查找匹配的environment
         if (isSpecifiedEnvironment(id)) {
+          //事务配置并创建事务工厂
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          //数据源配置加载并实例化数据源，数据源是必备的
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
+          //创建EnvironmentBuilder
           Environment.Builder environmentBuilder = new Environment.Builder(id)
               .transactionFactory(txFactory)
               .dataSource(dataSource);
@@ -363,8 +447,13 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //如果要同时使用package自动扫描和通过mapper明确指定要加载的mapper，一定要确保package自动扫描的范围不包括明确指定的mapper，
+        //否则通过package扫描的interface的时候，尝试加载对应xml文件的loadXmlResource()的逻辑中出现判重出错，
+        // 报org.apache.ibatis.binding.BindingException异常，即使xml文件中包含的内容和mapper接口中包含的语句不重复也会出错。包括加载
+        //mapper接口时自动加载的xml.mapper也一样会出错。
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
+          //加载mapper核心逻辑
           configuration.addMappers(mapperPackage);
         } else {
           String resource = child.getStringAttribute("resource");
@@ -382,6 +471,7 @@ public class XMLConfigBuilder extends BaseBuilder {
             mapperParser.parse();
           } else if (resource == null && url == null && mapperClass != null) {
             Class<?> mapperInterface = Resources.classForName(mapperClass);
+            //加载mapper核心逻辑
             configuration.addMapper(mapperInterface);
           } else {
             throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
