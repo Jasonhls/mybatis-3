@@ -186,6 +186,9 @@ public class Configuration {
 
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection");
   protected final Map<String, Cache> caches = new StrictMap<Cache>("Caches collection");
+  /**
+   * 存放resultMap的集合
+   */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<ResultMap>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<ParameterMap>("Parameter Maps collection");
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<KeyGenerator>("Key Generators collection");
@@ -241,6 +244,7 @@ public class Configuration {
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    //设置默认的DriverClass，即XMLLanguageDriver.class
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
     languageRegistry.register(RawLanguageDriver.class);
   }
@@ -664,7 +668,9 @@ public class Configuration {
 
   public void addResultMap(ResultMap rm) {
     resultMaps.put(rm.getId(), rm);
+    //检查本resultMap内的鉴别器有没有嵌套resultMap
     checkLocallyForDiscriminatedNestedResultMaps(rm);
+    //检查所有resultMap的鉴别器有没有嵌套resultMap
     checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 

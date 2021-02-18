@@ -103,6 +103,11 @@ public class MapperAnnotationBuilder {
 
   public MapperAnnotationBuilder(Configuration configuration, Class<?> type) {
     String resource = type.getName().replace('.', '/') + ".java (best guess)";
+    /**
+     * MapperBuilderAssistant和XMLConfigBuilder一样，都是继承于BaseBuilder。Select.class/Insert.class
+     * 等注解指示该方法对应的真实sql语句类型分别是select/insert。SelectProvider.class/InsertProvider.class主要用于动态sql，
+     * 它们允许你指定一个类名和一个方法在具体执行时返回要运行的sql语句。Mybatis会实例化这个类，然后执行指定的方法。
+     */
     this.assistant = new MapperBuilderAssistant(configuration, resource);
     this.configuration = configuration;
     this.type = type;
@@ -133,7 +138,7 @@ public class MapperAnnotationBuilder {
     //首先根据mapper接口的字符串表示判断是否已经加载，避免重复加载，正常情况下应该都没有加载
     if (!configuration.isResourceLoaded(resource)) {
       /**
-       *加载xml文件，这里会加载解析xml
+       *加载xml文件
        */
       loadXmlResource();
       configuration.addLoadedResource(resource);
@@ -179,6 +184,14 @@ public class MapperAnnotationBuilder {
     // Spring may not know the real resource name so we check a flag
     // to prevent loading again a resource twice
     // this flag is set at XMLMapperBuilder#bindMapperForNamespace
+    /**
+     * 根据package自动搜索加载的时候，约定俗称从classpath下加载接口的完整名，比如org.mybatis.example.mapper.BlogMapper，就加载
+     * org/mybatis/example/mapper/BlogMapper.xml。对于从package和class进来的mapper，如果找不到对应的文件，就忽略，因为这种
+     * 情况下是允许SQL语句作为注解打在接口上的，所以xml文件不是必须的，而对于直接声明的xml mapper文件，如果找不到话就抛出IOException异常而终止，
+     * 这在使用注解模式的时候需要注意。加载到对应的mapper.xml文件后，调用XMLMapperBuilder进行解析。在创建XMLMapperBuilder时，用到了
+     * configuration.getSqlFragments()，这就是我们在mapper文件中经常使用的可以被包含在其他语句中的SQL片段，但是我们没有初始化过，所以很有可能它
+     * 在解析过程中动态添加的，创建了XMLMapperBuilder之后，在调用其parse()接口进行具体xml的解析，这和mybatis-config的逻辑基本上是一致的思路。
+     */
     if (!configuration.isResourceLoaded("namespace:" + type.getName())) {
       String xmlResource = type.getName().replace('.', '/') + ".xml";
       InputStream inputStream = null;
@@ -188,8 +201,11 @@ public class MapperAnnotationBuilder {
         // ignore, resource is not required
       }
       if (inputStream != null) {
+        //使用XPathParser进行总控，XMLMapperEntityResolver进行具体判断
         XMLMapperBuilder xmlParser = new XMLMapperBuilder(inputStream, assistant.getConfiguration(), xmlResource, configuration.getSqlFragments(), type.getName());
-        //XMLMapperBuilder解析Mapper文件
+        /**
+         * XMLMapperBuilder解析Mapper文件核心逻辑
+         */
         xmlParser.parse();
       }
     }

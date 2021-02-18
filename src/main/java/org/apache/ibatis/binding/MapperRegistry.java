@@ -74,10 +74,10 @@ public class MapperRegistry {
         // mapper parser. If the type is already known, it won't try.
         /**
          *MapperProxyFactory主要是维护mapper接口的方法与对应mapper文件中的具体CRUD节点的关联关系。其中每个Method与对应MapperMethod维护在一起。
-         * MapperMethod是mapper中具体映射语句节点的内部表示。首先为mapper接口创建MapperProxyFactory，然后创建MapperAannotationBuilder进行具体的解析。
+         * MapperMethod是mapper中具体映射语句节点的内部表示。首先为mapper接口创建MapperProxyFactory，然后创建MapperAnnotationBuilder进行具体的解析。
          */
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
-        //mapper的解析
+        //MapperBuilderAssistant初始化完成之后，就调用build.parse()进行具体的mapper接口文件加载与解析
         parser.parse();
         loadCompleted = true;
       } finally {
@@ -108,6 +108,7 @@ public class MapperRegistry {
     //所有匹配的class都被存储在ResolveUtil.matches字段中
     Set<Class<? extends Class<?>>> mapperSet = resolverUtil.getClasses();
     for (Class<?> mapperClass : mapperSet) {
+      //调用addMapper方法进行具体的mapper类/接口解析
       addMapper(mapperClass);
     }
   }

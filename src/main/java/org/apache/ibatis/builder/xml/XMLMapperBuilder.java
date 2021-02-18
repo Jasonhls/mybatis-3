@@ -87,7 +87,9 @@ public class XMLMapperBuilder extends BaseBuilder {
     this.resource = resource;
   }
 
-  //加载的基本逻辑和加载mybatis-config一样的过程，使用XPathParser进行总控，XMLMapperEntityResolver进行具体判断。
+  /**
+   *加载的基本逻辑和加载mybatis-config一样的过程，使用XPathParser进行总控，XMLMapperEntityResolver进行具体判断。
+   */
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
       /**
@@ -115,24 +117,26 @@ public class XMLMapperBuilder extends BaseBuilder {
       }
       builderAssistant.setCurrentNamespace(namespace);
       /**
-       *解析缓存参照cache-ref，缓存参照因为通过namespace指向其他的缓存。所以会出现第一次解析的时候指向的缓存还不存在的时候，所以需要在所有的mapper文件加载完成后
+       *1.解析缓存参照cache-ref，缓存参照因为通过namespace指向其他的缓存。所以会出现第一次解析的时候指向的缓存还不存在的时候，所以需要在所有的mapper文件加载完成后
        * 进行二次处理，不仅仅是缓存参考，其他的CRUD也一样。所以在XMLMapperBuilder。configuration中有很多的incompleteXXX，这种设计模式类似于JVM GC中的
        * mark and sweep，标记、然后处理。所以当捕获到IncompleteElementException异常时，没有终止执行，而是将指向的缓存不存在的cacheRefResolver添加到
        * configuration.incompleteCacheRef中
        */
       cacheRefElement(context.evalNode("cache-ref"));
       /**
-       *解析缓存cache，mybatis使用的是永久缓存PerpetualCache，读取或设置各个属性默认值之后，调用builderAssistant.useNewCache构建缓存，其中的CacheBuilder使用了build模式（
+       *2.析缓存cache，mybatis使用的是永久缓存PerpetualCache，读取或设置各个属性默认值之后，调用builderAssistant.useNewCache构建缓存，其中的CacheBuilder使用了build模式（
        * 在effective里面，建议有4个以上可选属性时，应该为对象提供一个builder便于使用），只要实现org.apache.ibatis.cache.Cache接口，就是合法的mybatis缓存。
        */
       cacheElement(context.evalNode("cache"));
-      //解析参数映射parameterMap，目标不推荐使用参数映射，而是直接使用内联映射
+      //3.解析参数映射parameterMap，目标不推荐使用参数映射，而是直接使用内联映射
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
-      //解析结果集映射resultMap
+      //4.解析结果集映射resultMap
       resultMapElements(context.evalNodes("/mapper/resultMap"));
-      //解析sql片段，sql元素可以被用来定义可重用的sql代码端，包含在其他语句中。比如，他常被用来定义重用的列
+      //5.解析sql片段，sql元素可以被用来定义可重用的sql代码端，包含在其他语句中。比如，他常被用来定义重用的列
       sqlElement(context.evalNodes("/mapper/sql"));
-      //解析CURD语句
+      /**
+       *6.解析CURD语句
+       */
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -336,6 +340,7 @@ public class XMLMapperBuilder extends BaseBuilder {
           //解析id
           flags.add(ResultFlag.ID);
         }
+        //创建ResultMapping
         resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
       }
     }
@@ -504,7 +509,12 @@ public class XMLMapperBuilder extends BaseBuilder {
     if ("association".equals(context.getName())
         || "collection".equals(context.getName())
         || "case".equals(context.getName())) {
-      //对于其中的每个非select属性映射，调用resultMapElement进行递归解析。其中case节点主要用于鉴别器情况
+      /**
+       * 对于其中的每个非select属性映射，调用resultMapElement进行递归解析。其中case节点主要用于鉴别器情况
+       * Select的用途在于指定另外一个映射语句的ID，加载这个属性映射需要的复杂类型。在列属性中指定的列的值将被传递给目标select语句作为参数。
+       * 在注释中的例子里面，id的值会作为selectPostsForBlog的参数，这个语句会为每条映射到blogResult的记录执行一次selectPostsForBlog，并将
+       * 返回的值添加到blog.posts属性中，其类型为Post。
+       */
       if (context.getStringAttribute("select") == null) {
         ResultMap resultMap = resultMapElement(context, resultMappings);
         return resultMap.getId();

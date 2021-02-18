@@ -48,6 +48,7 @@ public class XMLIncludeTransformer {
     if (configurationVariables != null) {
       variablesContext.putAll(configurationVariables);
     }
+    //解析包含sql片段的逻辑
     applyIncludes(source, variablesContext, false);
   }
 
@@ -55,6 +56,27 @@ public class XMLIncludeTransformer {
    * Recursively apply includes through all SQL fragments.
    * @param source Include node in DOM tree
    * @param variablesContext Current context for static variables with values
+   * 总的来说，将节点分为文本节点、include、非include三类进行处理。因为一开始传递进来的是CRUD节点本身，所以第一次执行的时候，
+   * 是第一个else if，也就是source.getNodeType() == Node.ELEMENT_NODE，然后在这里开始遍历所有的子节点。对于include节点：根据
+   * 属性refid调用findSqlFragement找到sql片段，对于节点中包含的占位符进行替换解析，然后调用自身进行递归，解析到文本节点返回之后。
+   * 判断下include的sql片段是否和包含它的节点是同一个文档，如果不是，则把它从原来的文档包含进来。然后使用include指向的sql节点替换include节点，
+   * 最后剥掉sql节点本身，也即是把sql下的节点上移一层，这样就合法了。举例说明，这里完成的功能就是把：
+   * <sql id="userColumns">id,username,password</sql>
+   * <select id="selectUsers" parameterType="int" resultType="hashmap">
+   *      select <include refid="userColumns"/>
+   *      from some_table
+   *      where id = #{id}
+   * </select>
+   *  转换成下面的形式：
+   *  <select id="selectUsers" parameterType="int" resultType="hashmap">
+   *         select  id,username,password
+   *         from some_table
+   *         where id = #{id}
+   *  </select>
+   *
+   * 对于文本节点：根据入参变量上下文将变量设置替换进去，
+   * 对于其他节点：首先判断是否为根节点，如果是非根且变量上下文不为空，则先解析属性值上的占位符。然后对于子节点，递归进行调用直到
+   * 所有节点都为文本节点为止。
    */
   private void applyIncludes(Node source, final Properties variablesContext, boolean included) {
     if (source.getNodeName().equals("include")) {

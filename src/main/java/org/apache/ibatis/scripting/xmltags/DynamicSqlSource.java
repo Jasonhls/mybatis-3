@@ -35,6 +35,11 @@ public class DynamicSqlSource implements SqlSource {
     this.rootSqlNode = rootSqlNode;
   }
 
+  /**
+   * 动态sql主要在运行时由上下文调用SqlSource.getBoundSql()接口获取。它在处理了动态标签以及${}之后，调用了静态SQL构建器返回PreparedStatement，也就是静态SQL形式。
+   * @param parameterObject
+   * @return
+   */
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
     DynamicContext context = new DynamicContext(configuration, parameterObject);

@@ -53,6 +53,10 @@ public class XMLStatementBuilder extends BaseBuilder {
     this.requiredDatabaseId = databaseId;
   }
 
+  /**
+   * 从DTD可以看出，sql/crud元素里面可以包含这些元素：#PCDATA(文本节点) | include | trim | where | set | foreach | choose | if | bind，
+   * 除了文本节点外，其他类型的节点都可以嵌套
+   */
   public void parseStatementNode() {
     String id = context.getStringAttribute("id");
     String databaseId = context.getStringAttribute("databaseId");
@@ -70,7 +74,22 @@ public class XMLStatementBuilder extends BaseBuilder {
     String resultMap = context.getStringAttribute("resultMap");
     String resultType = context.getStringAttribute("resultType");
     String lang = context.getStringAttribute("lang");
-    //Mybatis从3.2开始支持可插拔的脚本语言，因此你可以在插入一种语言的驱动（language driver）之后来写基于这种语言的动态SQL查询
+    /**
+     *Mybatis从3.2开始支持可插拔的脚本语言，因此你可以在插入一种语言的驱动（language driver）之后来写基于这种语言的动态SQL查询
+     * Mybatis除了XML格式外，还提供了mybatis-velocity，允许使用velocity表达式编写SQL语句。可以通过实现LanguageDriver接口的方式来插入一种语言：
+     * 一旦有了自定义的语言驱动，就可以在mybatis-config.xml文件中将它设置为默认语言：
+     * <typeAliases>
+     *     <typeAlias type="org.sample.MyLanguage" alias="myLanguage"/>
+     * </typeAliases>
+     * <settings>
+     *     <setting name="defaultScriptingLanguage" value="myLanguage"/>
+     * </settings>
+     * 除了设置默认语言，还可以针对特殊的语句指定特定语言，通过如下的lang属性来完成
+     * <select id="selectBlog" lang="myLanguage">
+     *     SELECT * FROM BLOG
+     * </select>
+     */
+    //如果配置中没有配置lang属性，就会获取默认的LanguageDriver即XMLLanguageDriver
     LanguageDriver langDriver = getLanguageDriver(lang);
 
     Class<?> resultTypeClass = resolveClass(resultType);
@@ -94,12 +113,22 @@ public class XMLStatementBuilder extends BaseBuilder {
 
     // Include Fragments before parsing
     XMLIncludeTransformer includeParser = new XMLIncludeTransformer(configuration, builderAssistant);
+    /**
+     * 解析包含的sql片段的的逻辑
+     */
     includeParser.applyIncludes(context.getNode());
 
     // Parse selectKey after includes and remove them.
+    /**
+     * 解析selectKey节点，selectKey节点用于支持数据库比如Oracle不支持自动生成主键，或者可能JDBC驱动不支持自动生成主键时的请你看。
+     * 对于数据库自动生成主键的字段（比如MySQL和SQL Server），那么你可以设置useGeneratedKeys="true"，而且设置keyProperty到你已经做好的目标属性上
+     * 就可以了，不需要使用selectKey节点。由于已经处理了SQL片段节点，当前在处理CRUD节点，所以先将包含的SQL片段展开，然后解析selectKey是正确的，
+     * 因为selectKey可以包含在SQL片段中。
+     */
     processSelectKeyNodes(id, parameterTypeClass, langDriver);
     
     // Parse the SQL (pre: <selectKey> and <include> were parsed and removed)
+    //默认情况下，mybatis使用org.apache.ibatis.scripting.xmltags.XMLLanguageDriver。通过调用createSqlSource方法创建SqlSource
     SqlSource sqlSource = langDriver.createSqlSource(configuration, context, parameterTypeClass);
     String resultSets = context.getStringAttribute("resultSets");
     String keyProperty = context.getStringAttribute("keyProperty");
@@ -140,6 +169,20 @@ public class XMLStatementBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析SelectKey节点总的来说比较简单：
+   * 1.加载相关属性；
+   * 2.使用语言驱动器创建SqlSource。SqlSource是一个接口，它代表了从xml或者注解上读取到的sql映射语句的内容，其中参数使用占位符进行了替换，
+   * 在运行时，其代表的SQL会发送给数据库
+   * mybatis提供了两种类型的实现org.apache.ibatis.scripting.xmltags.DynamicSqlSource和org.apache.ibatis.scripting.defaults.RawSqlSource
+   * 3.SelectKey在实现上内部和其他的CRUD一样，都被当作一个MappedStatement进行存储。
+   * 4.最后为SelectKey对应的sql语句创建并维护一个KeyGenerator
+   * @param id
+   * @param nodeToHandle
+   * @param parameterTypeClass
+   * @param langDriver
+   * @param databaseId
+   */
   private void parseSelectKeyNode(String id, XNode nodeToHandle, Class<?> parameterTypeClass, LanguageDriver langDriver, String databaseId) {
     String resultType = nodeToHandle.getStringAttribute("resultType");
     Class<?> resultTypeClass = resolveClass(resultType);

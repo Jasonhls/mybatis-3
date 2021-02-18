@@ -30,6 +30,7 @@ public class MixedSqlNode implements SqlNode {
   @Override
   public boolean apply(DynamicContext context) {
     for (SqlNode sqlNode : contents) {
+      //遍历每个根SqlNode，只要根据对应的表达式结果(mybatis采用ONGL作为动态表达式语言)调用下一个SqlNode进行计算即可。
       sqlNode.apply(context);
     }
     return true;
