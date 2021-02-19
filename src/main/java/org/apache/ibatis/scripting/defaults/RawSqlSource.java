@@ -31,6 +31,8 @@ import org.apache.ibatis.session.Configuration;
  * 
  * @since 3.2.0
  * @author Eduardo Macarron
+ *
+ * 原始静态SQL语句的封装，在加载时就已经确定了SQL语句，没有、等动态标签和${}SQL拼接，比动态SQL语句要快，因为不需要运行时解析SQL节点。
  */
 public class RawSqlSource implements SqlSource {
 

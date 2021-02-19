@@ -24,6 +24,7 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * 动态SQL语句的封装，在运行时需要根据参数处理、等标签或者${}SQL拼接之后才能生成最后要执行的静态SQL语句。
  */
 public class DynamicSqlSource implements SqlSource {
 
@@ -37,6 +38,8 @@ public class DynamicSqlSource implements SqlSource {
 
   /**
    * 动态sql主要在运行时由上下文调用SqlSource.getBoundSql()接口获取。它在处理了动态标签以及${}之后，调用了静态SQL构建器返回PreparedStatement，也就是静态SQL形式。
+   * 额外参数主要是维护一些在加载时无法确定的参数，比如标签中的参数在加载时就无法尽最大努力确定。比如在下面方法中的SqlNode.apply()才能确定真正要执行的SQL
+   * 语句，以及额外参数。
    * @param parameterObject
    * @return
    */

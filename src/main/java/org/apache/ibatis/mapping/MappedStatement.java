@@ -30,6 +30,7 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * mapper文件或者mapper接口中每个映射语句都对应一个MappedStatement实例，它包含了所有运行时需要的信息比如结果映射、参数映射、是否需要刷新缓存等。
  */
 public final class MappedStatement {
 
@@ -185,6 +186,7 @@ public final class MappedStatement {
       assert mappedStatement.id != null;
       assert mappedStatement.sqlSource != null;
       assert mappedStatement.lang != null;
+      //resultMaps属性被设计只读，这样应该可以查看不能修改。
       mappedStatement.resultMaps = Collections.unmodifiableList(mappedStatement.resultMaps);
       return mappedStatement;
     }

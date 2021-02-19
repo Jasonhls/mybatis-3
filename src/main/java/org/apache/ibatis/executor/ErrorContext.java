@@ -17,6 +17,8 @@ package org.apache.ibatis.executor;
 
 /**
  * @author Clinton Begin
+ * ErrorContext定义了一个mybatis内部统一的日志规范，记录了错误信息、发生错误涉及的资源对象文件、对象、逻辑过程、sql语句以及出错原因，
+ * 但它并不会影响运行。
  */
 public class ErrorContext {
 

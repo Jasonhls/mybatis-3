@@ -31,6 +31,7 @@ import org.apache.ibatis.session.Configuration;
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
+ * 当SQL语句通过指定的类和方法获取时（使用@XXXProvider注解），需要使用本类，它会通过反射调用相应的方法得到SQL语句。
  */
 public class ProviderSqlSource implements SqlSource {
 

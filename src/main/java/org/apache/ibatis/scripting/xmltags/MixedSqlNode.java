@@ -19,6 +19,7 @@ import java.util.List;
 
 /**
  * @author Clinton Begin
+ * MixedSqlNode代表了所有具体SqlNode的集合，其他分别代表了一种类型的SqlNode。
  */
 public class MixedSqlNode implements SqlNode {
   private final List<SqlNode> contents;

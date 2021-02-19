@@ -20,6 +20,10 @@ package org.apache.ibatis.mapping;
  * It creates the SQL that will be passed to the database out of the input parameter received from the user.
  *
  * @author Clinton Begin
+ *
+ * SqlSource是XML文件或者注解方法中映射语句的实现时表示，通过SqlSourceBuilder.parse()方法创建，SqlSourceBuilder中符号解析器将mybatis中的
+ * 查询参数#{}转换为？，并记录了参数的顺序。它只有一个方法getBoundSql用于获取映射语句对象的各个组成部分。
+ * 代表从XML文件或者注解读取的映射语句的内容，它创建的SQL会被传递给数据库
  */
 public interface SqlSource {
 

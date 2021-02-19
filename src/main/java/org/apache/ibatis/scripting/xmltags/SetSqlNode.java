@@ -28,6 +28,7 @@ public class SetSqlNode extends TrimSqlNode {
   private static List<String> suffixList = Arrays.asList(",");
 
   public SetSqlNode(Configuration configuration,SqlNode contents) {
+    //直接委托给TrimSqlNode处理
     super(configuration, contents, "SET", null, null, suffixList);
   }
 

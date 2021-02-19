@@ -88,6 +88,7 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   /**
+   * 解析入口
    *加载的基本逻辑和加载mybatis-config一样的过程，使用XPathParser进行总控，XMLMapperEntityResolver进行具体判断。
    */
   public void parse() {

@@ -23,6 +23,8 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
 /**
  * @author Clinton Begin
+ * 我们不需要从头实现ObjectWrapper接口，可以选择继承BeanWrapper或者MapWrapper。
+ * 对于Map类型，我们可以继承MapWrapper，让参数userCamelCaseMapping起作用。MapWrapper默认的findProperty方法并没有做驼峰转换处理
  */
 public interface ObjectWrapper {
 

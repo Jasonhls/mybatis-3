@@ -93,6 +93,8 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ * Configuration是mybatis所有配置以及mapper文件的元数据容器。无论是解析mapper文件还是运行时执行SQL语句，都需要依赖于mybatis的环境和配置信息，比如
+ * databaseId、类型别名等。mybatis实现将所有这些信息封装到Configuration种并提供一系列便利的接口方便各主要的调用方使用，避免了各种配置和元数据信息到处散落的凌乱。
  */
 public class Configuration {
 

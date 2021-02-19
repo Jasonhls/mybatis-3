@@ -25,6 +25,11 @@ public class StaticTextSqlNode implements SqlNode {
     this.text = text;
   }
 
+  /**
+   * 静态文本节点不做任何处理，直接将本文本节点的内容追加到已经解析了的SQL文本的后面。
+   * @param context
+   * @return
+   */
   @Override
   public boolean apply(DynamicContext context) {
     context.appendSql(text);

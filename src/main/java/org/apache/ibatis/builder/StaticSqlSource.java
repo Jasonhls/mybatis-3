@@ -24,6 +24,7 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ * 最终静态SQL语句的封装，其他类型的SqlSource最终都委托给StaticSqlSource。
  */
 public class StaticSqlSource implements SqlSource {
 

@@ -91,6 +91,7 @@ import org.apache.ibatis.type.UnknownTypeHandler;
 
 /**
  * @author Clinton Begin
+ * 解析Mapper接口的主控类
  */
 public class MapperAnnotationBuilder {
 

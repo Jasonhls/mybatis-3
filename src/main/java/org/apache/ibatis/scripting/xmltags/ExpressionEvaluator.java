@@ -28,6 +28,12 @@ import org.apache.ibatis.builder.BuilderException;
  */
 public class ExpressionEvaluator {
 
+    /**
+     * 布尔表达式解析，对于返回值为数字的if表达式，0为假，非0为真
+     * @param expression
+     * @param parameterObject
+     * @return
+     */
   public boolean evaluateBoolean(String expression, Object parameterObject) {
     Object value = OgnlCache.getValue(expression, parameterObject);
     if (value instanceof Boolean) {
@@ -39,6 +45,12 @@ public class ExpressionEvaluator {
     return value != null;
   }
 
+    /**
+     * 循环表达式解析，主要用于foreach标签
+     * @param expression
+     * @param parameterObject
+     * @return
+     */
   public Iterable<?> evaluateIterable(String expression, Object parameterObject) {
     Object value = OgnlCache.getValue(expression, parameterObject);
     if (value == null) {

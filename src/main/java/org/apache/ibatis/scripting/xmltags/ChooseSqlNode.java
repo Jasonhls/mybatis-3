@@ -32,10 +32,12 @@ public class ChooseSqlNode implements SqlNode {
   @Override
   public boolean apply(DynamicContext context) {
     for (SqlNode sqlNode : ifSqlNodes) {
+      //遍历所有when分支节点，只要遇到第一个为true就返回
       if (sqlNode.apply(context)) {
         return true;
       }
     }
+    //全部when都为false时，走otherwise分支
     if (defaultSqlNode != null) {
       defaultSqlNode.apply(context);
       return true;

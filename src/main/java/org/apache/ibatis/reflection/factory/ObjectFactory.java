@@ -22,6 +22,14 @@ import java.util.Properties;
  * MyBatis uses an ObjectFactory to create all needed new Objects.
  * 
  * @author Clinton Begin
+ * Mybatis每次创建结果对象的新实例时，都会使用一个对象工厂（ObjectFactory）实例来完成。默认的对象工厂DefaultObjectFactory不仅仅是实例化目标类，要么通过默认构造方法，
+ * 要么在参数映射的时候通过参数构造方法来实例化。如果想覆盖对象工厂的默认行为比如给某些属性设置默认值（有些时候直接修改对象不可行，或者由于不是自己拥有的代码或者改动
+ * 太大），则可以通过创建自己的对象工厂来实现。
+ *
+ * 从接口的定义可以看出，它包含了两种通过反射机制构造实体类对象的方法，一种是通过无参构造函数，一种是通过带参数的构造函数。同时，
+ * 为了使工厂类能设置其他属性，还提供了setProperties()方法。
+ * 要自定义对象工厂类，可以实现ObjectFactory这个接口，但是这样我们就需要自己去实现一些在DefaultObjectFactory已经实现好了的东西，
+ * 所以也可以继承这个DefaultObjectFactory类，这样实现起来更简单。
  */
 public interface ObjectFactory {
 
