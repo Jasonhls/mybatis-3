@@ -21,6 +21,7 @@ import java.sql.Connection;
  * Creates an {@link SqlSession} out of a connection or a DataSource
  *
  * @author Clinton Begin
+ * 多种形式的重载，除了使用默认设置时，可以指定自动提交模式、特定的jdbc连接、事务隔离级别，以及指定的执行器类型。关于执行器类型，mybatis提供了三种执行器类型：SIMPLE，REUSE，BATCH.
  */
 public interface SqlSessionFactory {
 
