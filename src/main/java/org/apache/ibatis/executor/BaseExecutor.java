@@ -131,8 +131,11 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //首先根据传递的参数获取BoundSql对象，对于不同类型的SqlSource，对应的getBoundSql实现不同，具体参见SqlSource详解第一节
     BoundSql boundSql = ms.getBoundSql(parameter);
+    //创建缓存key
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
+    //委托给重载的query
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
 
@@ -143,16 +146,19 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    //如果需要刷新缓存（默认DML需要刷新，也可以语句层面修改），且queryStack(应该是用于嵌套查询的场景)=0
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
       clearLocalCache();
     }
     List<E> list;
     try {
       queryStack++;
+      //如果查询不需要应用结果处理器，则先从缓存获取，这样可以避免数据库查询。
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //不管是因为需要应用结果处理器还是缓存中没有，都从数据库中查询
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -196,6 +202,7 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    //根据映射语句id，分页信息，jdbc规范化的预编译sql，所有映射参数的值以及环境id的值，计算出缓存key
     CacheKey cacheKey = new CacheKey();
     cacheKey.update(ms.getId());
     cacheKey.update(rowBounds.getOffset());
