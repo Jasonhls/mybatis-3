@@ -196,7 +196,9 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     //至少执行一次
     while (rsw != null && resultMapCount > resultSetCount) {
       ResultMap resultMap = resultMaps.get(resultSetCount);
-      //根据resultMap的定义将resultset打包到应用端的multipleResults中
+      /**
+       * 根据resultMap的定义将resultset打包到应用端的multipleResults中
+       */
       handleResultSet(rsw, resultMap, multipleResults, null);
       //循环直到处理完所有的结果集，一般情况下，一个execute只会返回一个结果集，除非语句比如存储过程返回多个resultSet
       rsw = getNextResultSet(stmt);
@@ -329,6 +331,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
           handleRowValues(rsw, resultMap, defaultResultHandler, rowBounds, null);
           multipleResults.add(defaultResultHandler.getResultList());
         } else {
+          //处理主记录
           handleRowValues(rsw, resultMap, resultHandler, rowBounds, null);
         }
       }

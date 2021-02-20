@@ -135,7 +135,9 @@ public abstract class BaseExecutor implements Executor {
     BoundSql boundSql = ms.getBoundSql(parameter);
     //创建缓存key
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
-    //委托给重载的query
+    /**
+     * 委托给重载的query，查询核心逻辑
+     */
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
  }
 
@@ -158,7 +160,9 @@ public abstract class BaseExecutor implements Executor {
       if (list != null) {
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
-        // 不管是因为需要应用结果处理器还是缓存中没有,都从数据库中查询
+        /**
+         *    不管是因为需要应用结果处理器还是缓存中没有,都从数据库中查询
+          */
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
@@ -330,7 +334,9 @@ public abstract class BaseExecutor implements Executor {
     //一开始放个占位符进去
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
-      //doQuery是个抽象方法，每个具体的执行器都要自己去实现，先看SIMPLE的
+      /**
+       * doQuery是个抽象方法，每个具体的执行器都要自己去实现，先看SIMPLE的
+       */
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
       localCache.removeObject(key);
