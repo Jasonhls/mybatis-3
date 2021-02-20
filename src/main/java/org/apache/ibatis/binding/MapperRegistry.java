@@ -41,6 +41,11 @@ public class MapperRegistry {
   }
 
   @SuppressWarnings("unchecked")
+  /**
+   * MapperRegistry将创建代理的任务委托给MapperProxyFactory，MapperProxyFactory首先为Mapper接口创建一个实现了InvocationHandler方法调用
+   * 处理器接口的代理类MapperProxy，并实现invoke接口（其中为mapper各方法执行sql的具体逻辑），最后才调用JDK的java.lang.reflect.Proxy
+   * 为Mapper接口创建动态代理类并返回
+   */
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
     if (mapperProxyFactory == null) {

@@ -601,6 +601,7 @@ public class Configuration {
   }
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    //创建StatementHandler对象
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
     //如果有拦截的话，则为语句处理器新生成一个代理类
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);

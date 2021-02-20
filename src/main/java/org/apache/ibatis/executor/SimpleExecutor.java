@@ -40,11 +40,23 @@ public class SimpleExecutor extends BaseExecutor {
     super(configuration, transaction);
   }
 
+  /**
+   * 和selectList的实现非常相似，先创建语句处理器，然后创建Statement实例，最后调用语句处理的update，语句处理器里面调用jdbc对应
+   * 的update的方法execute()。和selectList的不同之处在于：
+   * 1.在创建语句处理器期间，会根据需要调用KeyGenerator.processBefore生成前置id；
+   * 2.在执行完成execute()方法后，会根据需要调用KeyGenerator.processAfter生成后置id；
+   * 通过分析delete/insert，我们发现他们内部都委托给update实现了。
+   * @param ms
+   * @param parameter
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
+      //创建StatementHandler对象
       StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
       stmt = prepareStatement(handler, ms.getStatementLog());
       return handler.update(stmt);
