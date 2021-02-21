@@ -617,10 +617,13 @@ public class Configuration {
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      //批量执行器
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      //REUSE执行器
       executor = new ReuseExecutor(this, transaction);
     } else {
+      //简单执行器
       executor = new SimpleExecutor(this, transaction);
     }
     if (cacheEnabled) {

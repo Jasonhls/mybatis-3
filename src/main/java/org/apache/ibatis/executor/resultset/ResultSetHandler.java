@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * @author Clinton Begin
+ * 结果集处理器ResultSetHandler，结果处理器负责将JDBC查询结果映射到java对象。
  */
 public interface ResultSetHandler {
 

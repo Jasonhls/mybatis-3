@@ -157,6 +157,7 @@ public abstract class BaseExecutor implements Executor {
     List<E> list;
     try {
       queryStack++;
+      //如果在一级缓存中就直接获取
       //如果查询不需要应用结果处理器,则先从缓存获取,这样可以避免数据库查询。
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
@@ -178,6 +179,7 @@ public abstract class BaseExecutor implements Executor {
       deferredLoads.clear();
       if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
         // issue #482
+        //如果设置了一级缓存是STATEMENT级别而非默认的SESSION级别，一级缓存就去掉了
         clearLocalCache();
       }
     }
@@ -246,6 +248,14 @@ public abstract class BaseExecutor implements Executor {
     return localCache.getObject(key) != null;
   }
 
+  /**
+   *对于不同的执行器，在提交或回滚操作的逻辑不一样，因为每个执行器在一级、二级、语句缓存上的差异：
+   * 对于简单执行器，除了清空一级缓存外，什么都不做
+   * 对于REUSE执行器，关闭每个缓存的Statement以释放服务器端语句处理器，然后清空缓存的语句。
+   * 对于批量处理器，则执行每个批处理语句的executeBatch()方法以便真正执行语句，然后关闭Statement
+   * @param required
+   * @throws SQLException
+   */
   @Override
   public void commit(boolean required) throws SQLException {
     if (closed) {

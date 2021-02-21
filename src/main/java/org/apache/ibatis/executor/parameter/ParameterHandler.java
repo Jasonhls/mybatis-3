@@ -22,6 +22,7 @@ import java.sql.SQLException;
  * A parameter handler sets the parameters of the {@code PreparedStatement}
  *
  * @author Clinton Begin
+ * 参数处理器ParameterHandler，参数处理器负责PreparedStatement入参的具体设置。
  */
 public interface ParameterHandler {
 

@@ -328,6 +328,11 @@ public class DefaultSqlSession implements SqlSession {
     cursorList.add(cursor);
   }
 
+  /**
+   * 判断是否应该提交或者回滚事务
+   * @param force
+   * @return
+   */
   private boolean isCommitOrRollbackRequired(boolean force) {
     return (!autoCommit && dirty) || force;
   }

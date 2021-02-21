@@ -98,6 +98,7 @@ public class CachingExecutor implements Executor {
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
         @SuppressWarnings("unchecked")
+        //如果二级缓存中找到了记录就直接返回，否则到DB查询后进行缓存
         List<E> list = (List<E>) tcm.getObject(cache, key);
         if (list == null) {
           list = delegate.<E> query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);

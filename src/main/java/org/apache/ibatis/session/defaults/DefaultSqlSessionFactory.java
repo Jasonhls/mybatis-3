@@ -87,6 +87,14 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * mybatis的事务管理器模式分为两种，自动提交和手工提交，DefaultSqlSessionFactory的openSession中重载中，提供了一个参数用于控制
+   * 是否自动提交事务，该参数最终被传递给java.sql.Connection.setAutoCommit()方法用于控制是否自动提交事务（默认情况下，连接是自动提交的）
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
