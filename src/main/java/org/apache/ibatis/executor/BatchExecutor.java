@@ -36,15 +36,28 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
- * @author Jeff Butler 
+ * @author Jeff Butler
+ * 批量执行器是JDBC Statement.addBatch的实现，对于批量insert而言比如导入大量数据的ETL，驱动器如果支持的话，能够大幅度的提高DML语句的性能（首先最重要的是，网络的交互就大幅度减少了），
+ * 比如对于mysql而言，在5.1.13以上版本的驱动，在连接字符串上rewriteBatchedStatements参数也就是jdb:mysql://192.168.1.100:3306/test?rewriteBatchedStatements=true后，性能可以
+ * 提高几十倍，参见 https://www.cnblogs.com/kxdblog/p/4056010.html　以及　http://blog.sina.com.cn/s/blog_68b4c68f01013yog.html　。
+ * 因为BatchExecutor对于每个statementList中的语句，都执行executeBatch()方法，因此最差的极端情况是交叉执行不同的DML SQL语句，这种情况退化为最原始的方式。
+ * 比如下列形式就是最差的情况：
+ * for(int i = 0; i < 100; i++) {
+ *     session.update("insertUser", userReq);
+ *     session.update("insertUserProfile", userReq);
+ * }
  */
 public class BatchExecutor extends BaseExecutor {
 
   public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;
 
+  //存储在一个事务中的批量DML的语句列表
   private final List<Statement> statementList = new ArrayList<Statement>();
+  //存放DML语句对应的参数对象，包括自动/手工生成的key
   private final List<BatchResult> batchResultList = new ArrayList<BatchResult>();
+  //最新提交执行的SQL语句
   private String currentSql;
+  //最新提交执行的语句
   private MappedStatement currentStatement;
 
   public BatchExecutor(Configuration configuration, Transaction transaction) {
@@ -58,6 +71,8 @@ public class BatchExecutor extends BaseExecutor {
     final BoundSql boundSql = handler.getBoundSql();
     final String sql = boundSql.getSql();
     final Statement stmt;
+    //如果最新执行的一条语句和前面一条语句相同，就不创建新的语句了，直接用缓存的语句，只是把参数对象添加到该语句对应的BatchResult中
+    //否则的话，无论是否在未提交之前，还有pending的语句，都新插入一条语句到list中
     if (sql.equals(currentSql) && ms.equals(currentStatement)) {
       int last = statementList.size() - 1;
       stmt = statementList.get(last);
@@ -75,6 +90,7 @@ public class BatchExecutor extends BaseExecutor {
       batchResultList.add(new BatchResult(ms, sql, parameterObject));
     }
   // handler.parameterize(stmt);
+    //调用jdbc的addBatch方法
     handler.batch(stmt);
     return BATCH_UPDATE_RETURN_VALUE;
   }

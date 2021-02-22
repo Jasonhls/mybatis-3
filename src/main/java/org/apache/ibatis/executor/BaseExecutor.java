@@ -46,6 +46,17 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ * BaseExecutor的属性：
+ * 1.执行器在特定的事务上下文下执行
+ * 2.具有本地缓存和本地出参缓存（任何时候，只要事务提交或者回滚或者执行update或者查询时设定了刷新缓存，都会清空本地缓存和本地出参缓存）
+ * 3.具有延迟加载任务
+ *
+ * BaseExecutor实现了大部分通用功能本地缓存管理、事务提交、回滚、超时设置、延迟加载等，但是将下列4个方法留给了具体的子类实现：
+ * doUpdate，doFlushStatements，doQuery，doQueryCursor
+ * 从功能上来说，三种执行器的差别在于：
+ * ExecutorType.SIMPLE：这个执行器类型不做特殊的事情。它为每个语句的每次执行创建一个新的预处理语句。
+ * ExecutorType.REUSE：这个执行器类型会复用预处理语句。
+ * ExecutorType.BATCH：这个执行器会批量执行所有更新语句，也就是jdbc addBatch API的facade模式。
  */
 public abstract class BaseExecutor implements Executor {
 
@@ -55,11 +66,16 @@ public abstract class BaseExecutor implements Executor {
   protected Executor wrapper;
 
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  //本地缓存
+  //mybatis的二级缓存 PerpetualCache实际上内部使用的是常规的Map
   protected PerpetualCache localCache;
+  //本地出参缓存
+  //用于储存过程出参
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
   protected int queryStack;
+  //transaction的底层连接是否已经释放
   private boolean closed;
 
   protected BaseExecutor(Configuration configuration, Transaction transaction) {
@@ -80,6 +96,10 @@ public abstract class BaseExecutor implements Executor {
     return transaction;
   }
 
+  /**
+   * 关闭本执行器相关的transaction
+   * @param forceRollback
+   */
   @Override
   public void close(boolean forceRollback) {
     try {
@@ -107,6 +127,13 @@ public abstract class BaseExecutor implements Executor {
     return closed;
   }
 
+  /**
+   * 更新操作
+   * @param ms
+   * @param parameter
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int update(MappedStatement ms, Object parameter) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());

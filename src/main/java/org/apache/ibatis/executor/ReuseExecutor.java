@@ -35,6 +35,10 @@ import org.apache.ibatis.transaction.Transaction;
 
 /**
  * @author Clinton Begin
+ * REUSE和SIMPLE在doUpdate/doQuery上有个差别，不再是每执行一个语句就close掉了，而是尽可能的根据SQL文本进行缓存并重用，但是由于数据库服务器端通常对每个连接
+ * 以及全局的语句（oracle称为游标）handler的数量有限制，oracle中是open_cursors参数控制，mysql中是mysql_stmt_close参数控制，这就会导致如果sql都是靠if各种拼接出来，
+ * 日积月累可能会导致数据库资源耗尽。其是否有足够价值，视创建Statement语句消耗的资源占整体资源的比例、以及一共有多少完全不同的Statement数量而定，
+ * 一般来说，纯粹的OLTP且非自动生成的sqlmap，它会比SIMPLE执行器更好。
  */
 public class ReuseExecutor extends BaseExecutor {
 

@@ -35,6 +35,8 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
  * @author Clinton Begin
+ * BaseStatementHandler是PreparedStatementHandler、SimpleStatementHandler、以及CallableStatementHandler这三种类型语句处理器的抽象父类，
+ * 封装了一些实现细节比如设置超时时间、结果集每次提取大小等操作。
  */
 public abstract class BaseStatementHandler implements StatementHandler {
 
@@ -104,8 +106,10 @@ public abstract class BaseStatementHandler implements StatementHandler {
     }
   }
 
+  //不同类型语句的初始化过程不同，比如Statement语句直接调用JDBC java.sql.Connection.createStatement，而PrepareStatement则是调用java.sql.Connection.prepareStatement
   protected abstract Statement instantiateStatement(Connection connection) throws SQLException;
 
+  //设置JDBC语句超时时间，注：数据库服务器端也可以设置语句超时时间。mysql通过参数max_statement_time设置，oracle截止12.2c不支持
   protected void setStatementTimeout(Statement stmt, Integer transactionTimeout) throws SQLException {
     Integer queryTimeout = null;
     if (mappedStatement.getTimeout() != null) {
@@ -119,6 +123,8 @@ public abstract class BaseStatementHandler implements StatementHandler {
     StatementUtil.applyTransactionTimeout(stmt, queryTimeout, transactionTimeout);
   }
 
+  // fetchSize设置每次从服务器端提取的行数，默认不同数据库实现不同，mysql一次性提取全部，oracle默认10。
+  // 正确设置fetchSize可以避免OOM并且对性能有一定的影响，尤其在网络延时较大的情况下
   protected void setFetchSize(Statement stmt) throws SQLException {
     Integer fetchSize = mappedStatement.getFetchSize();
     if (fetchSize != null) {

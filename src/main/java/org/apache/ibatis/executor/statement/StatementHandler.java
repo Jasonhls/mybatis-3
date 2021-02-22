@@ -28,6 +28,7 @@ import org.apache.ibatis.session.ResultHandler;
 /**
  * @author Clinton Begin
  * 语句处理器StatementHandler，语句处理器负责和JDBC层具体交互，包括prepare语句，执行语句，以及调用ParameterHandler.parameterize()设置参数。
+ * StatementHandler主要包括prepare语句、给语句设置参数、执行语句获取要执行的SQL语句本身。
  */
 public interface StatementHandler {
 
