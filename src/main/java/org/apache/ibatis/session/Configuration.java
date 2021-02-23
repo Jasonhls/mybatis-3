@@ -601,9 +601,13 @@ public class Configuration {
   }
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
-    //创建StatementHandler对象
+    /**
+     * 创建StatementHandler对象，创建过程中也会执行插件链的pluginAll方法
+     */
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
-    //如果有拦截的话，则为语句处理器新生成一个代理类
+    /**
+     * 如果有拦截的话，则为语句处理器新生成一个代理类
+     */
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -629,6 +633,9 @@ public class Configuration {
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    /**
+     * 调用所有的插件的plugin方法，也就是说，插件必须实现org.apache.ibatis.plugin.Interceptor接口
+     */
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

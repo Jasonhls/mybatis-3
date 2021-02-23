@@ -71,7 +71,13 @@ public abstract class BaseStatementHandler implements StatementHandler {
 
     this.boundSql = boundSql;
 
+    /**
+     * 创建ParameterHandler对象的过程中会调用configuration的属性interceptorChain的pluginAll方法
+     */
     this.parameterHandler = configuration.newParameterHandler(mappedStatement, parameterObject, boundSql);
+    /**
+     * 创建ResultSetHandler的过程中也会调用configuration的属性interceptorChain的pluginAll方法
+     */
     this.resultSetHandler = configuration.newResultSetHandler(executor, mappedStatement, rowBounds, parameterHandler, resultHandler, boundSql);
   }
 

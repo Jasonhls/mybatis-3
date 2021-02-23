@@ -74,6 +74,8 @@ public class SimpleExecutor extends BaseExecutor {
        * 根据上下文参数和具体的执行器new一个StatementHandler，其中包含了所有必要的信息，比如结果处理器、参数处理器、执行器等等，
        * 主要有三种类型的语句处理器UNPREPARE、PREPARE、CALLABLE。默认是PREPARE类型，通过mapper语句上的statementType属性
        * 进行设置，一般除了存储过程外不应该设置
+       *
+       * 创建StatementHandler，创建过程中，会执行configuration的属性interceptorChain（插件链）的pluginAll方法，即会执行所有插件的plugin方法
        */
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
       /**

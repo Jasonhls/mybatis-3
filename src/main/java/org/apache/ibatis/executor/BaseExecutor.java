@@ -192,6 +192,7 @@ public abstract class BaseExecutor implements Executor {
       } else {
         /**
          *    不管是因为需要应用结果处理器还是缓存中没有,都从数据库中查询
+         *    查询的核心逻辑
           */
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }

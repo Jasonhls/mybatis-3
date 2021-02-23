@@ -182,6 +182,9 @@ public class DefaultSqlSession implements SqlSession {
   public void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler) {
     try {
       MappedStatement ms = configuration.getMappedStatement(statement);
+      /**
+       * 执行查询逻辑
+       */
       executor.query(ms, wrapCollection(parameter), rowBounds, handler);
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
