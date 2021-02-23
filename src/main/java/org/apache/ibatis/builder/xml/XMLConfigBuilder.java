@@ -462,29 +462,36 @@ public class XMLConfigBuilder extends BaseBuilder {
         //否则通过package扫描的interface的时候，尝试加载对应xml文件的loadXmlResource()的逻辑中出现判重出错，
         // 报org.apache.ibatis.binding.BindingException异常，即使xml文件中包含的内容和mapper接口中包含的语句不重复也会出错。包括加载
         //mapper接口时自动加载的xml.mapper也一样会出错。
+
+        //使用包配置的情况
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           //加载mapper核心逻辑
           configuration.addMappers(mapperPackage);
         } else {
+          //使用mapper配置的情况
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
           if (resource != null && url == null && mapperClass == null) {
+            //resource不为空
             ErrorContext.instance().resource(resource);
             InputStream inputStream = Resources.getResourceAsStream(resource);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url != null && mapperClass == null) {
+            //url不为空
             ErrorContext.instance().resource(url);
             InputStream inputStream = Resources.getUrlAsStream(url);
             XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
             mapperParser.parse();
           } else if (resource == null && url == null && mapperClass != null) {
+            //class属性不为空
             Class<?> mapperInterface = Resources.classForName(mapperClass);
             //加载mapper核心逻辑
             configuration.addMapper(mapperInterface);
           } else {
+            //resource、url和class只能存在一个
             throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
           }
         }
