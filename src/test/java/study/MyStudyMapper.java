@@ -32,4 +32,6 @@ public interface MyStudyMapper {
   List<User> getUserByName(String name);
 
   User getUserById(Long id);
+
+  List<User> getUser();
 }

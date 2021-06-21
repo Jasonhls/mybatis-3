@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.List;
 
 /**
  * @description:
@@ -36,7 +37,7 @@ public class MyStudyTest {
 
     @BeforeClass
     public static void before() {
-        System.out.println("执行之前的动作");
+        System.out.println("测试类：执行之前的动作");
     }
 
     @Test
@@ -47,12 +48,16 @@ public class MyStudyTest {
             sqlSessionFactory = new SqlSessionFactoryBuilder().build(resourceAsReader);
             sqlSession = sqlSessionFactory.openSession();
             /*方式一*/
-            User user = sqlSession.selectOne("study.MyStudyMapper.getUserById", 1L);
-            System.out.println(user.toString());
-            /*方式二*/
+//            User user = sqlSession.selectOne("study.MyStudyMapper.getUserById", 1L);
+//            System.out.println(user.toString());
+//            /*方式二*/
             MyStudyMapper mapper = sqlSession.getMapper(MyStudyMapper.class);
             User user2 = mapper.getUserById(2L);
             System.out.println(user2.toString());
+//            MyStudyMapper mapper = sqlSession.getMapper(MyStudyMapper.class);
+//            List<User> user = mapper.getUser();
+//            sqlSession.commit();
+//            System.out.println(user);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -60,5 +65,13 @@ public class MyStudyTest {
                 sqlSession.close();
             }
         }
+    }
+
+    @Test
+    public void test() {
+        String sql = "hello da\njia ha    o";
+        System.out.println(sql);
+        sql = sql.replaceAll("[\\s]+", " ");
+        System.out.println(sql);
     }
 }

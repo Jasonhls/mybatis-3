@@ -25,4 +25,8 @@
     <select id="getUserById" parameterType="java.lang.Long" resultType="study.User">
         select * from user where id = #{id}
     </select>
+
+    <select id="getUser" resultType="study.User">
+        select * from user
+    </select>
 </mapper>
