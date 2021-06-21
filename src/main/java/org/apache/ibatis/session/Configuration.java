@@ -589,6 +589,9 @@ public class Configuration {
 
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    /**
+     * 调用拦截器链的pluginAll方法，如果有拦截，则为参数处理器ParameterHandler新生成一个代理类并返回。
+     */
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
@@ -596,6 +599,9 @@ public class Configuration {
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
       ResultHandler resultHandler, BoundSql boundSql) {
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
+    /**
+     * 调用拦截器链的pluginAll方法，如果有拦截，则为结果处理器ResultSetHandler新生成一个代理类并返回。
+     */
     resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
     return resultSetHandler;
   }
@@ -606,7 +612,7 @@ public class Configuration {
      */
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
     /**
-     * 如果有拦截的话，则为语句处理器新生成一个代理类
+     * 调用拦截器链的pluginAll方法，如果有拦截，则为语句处理器StatementHandler新生成一个代理类并返回。
      */
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
@@ -634,6 +640,7 @@ public class Configuration {
       executor = new CachingExecutor(executor);
     }
     /**
+     * 调用拦截器链的pluginAll方法，如果有拦截，则新生成一个代理类并返回。
      * 调用所有的插件的plugin方法，也就是说，插件必须实现org.apache.ibatis.plugin.Interceptor接口
      */
     executor = (Executor) interceptorChain.pluginAll(executor);
